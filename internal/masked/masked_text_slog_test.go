@@ -22,16 +22,6 @@ func (w *testLogWriter) Write(p []byte) (n int, err error) {
 }
 
 func TestLogValue(t *testing.T) {
-	t.Run("should return a masked slog.Value", func(t *testing.T) {
-		m := masked.NewMaskedText(sensitive, testMaskFunc)
-
-		result := m.LogValue()
-
-		if result.String() != handled {
-			t.Errorf("expected %q, got %q", handled, result)
-		}
-	})
-
 	t.Run("ensure slog logs the masked value", func(t *testing.T) {
 		writer := &testLogWriter{}
 

@@ -3,6 +3,8 @@ package masked
 import (
 	"log/slog"
 	"strconv"
+
+	"gopkg.in/yaml.v3"
 )
 
 type MaskedText struct {
@@ -31,10 +33,27 @@ func (m MaskedText) MarshalJSON() ([]byte, error) {
 }
 
 func (m *MaskedText) UnmarshalJSON(v []byte) error {
+	s, err := strconv.Unquote(string(v))
 	*m = MaskedText{
-		s:    string(v),
+		s:    s,
 		mask: FixedMaskFunc,
 	}
 
-	return nil
+	return err
+}
+
+func (m MaskedText) MarshalYAML() (interface{}, error) {
+	return m.mask(m.s), nil
+}
+
+func (m *MaskedText) UnmarshalYAML(value *yaml.Node) error {
+	var s string
+	err := value.Decode(&s)
+
+	*m = MaskedText{
+		s:    s,
+		mask: FixedMaskFunc,
+	}
+
+	return err
 }
