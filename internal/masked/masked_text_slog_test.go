@@ -51,11 +51,7 @@ func TestLogValue(t *testing.T) {
 			t.Run("logs as a field", func(t *testing.T) {
 				writer.Clear()
 
-				type someStruct struct {
-					Value masked.MaskedText
-				}
-
-				some := someStruct{Value: masked.NewMaskedText(sensitive, testMaskFunc)}
+				some := someStruct{M: masked.NewMaskedText(sensitive, testMaskFunc)}
 
 				logger.Info("log", "value", some)
 				got := string(writer.b)

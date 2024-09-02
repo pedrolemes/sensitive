@@ -7,9 +7,20 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type masker interface {
+	DefaultMaskFunc() func(string) string
+}
+
 type MaskedText struct {
 	s    string
 	mask func(string) string
+}
+
+func maskOrFixed(s string, mask func(string) string) string {
+	if mask == nil {
+		return FixedMaskFunc(s)
+	}
+	return mask(s)
 }
 
 func NewMaskedText(s string, mask func(string) string) MaskedText {
@@ -21,11 +32,11 @@ func (m MaskedText) Plain() string {
 }
 
 func (m MaskedText) String() string {
-	return m.mask(m.s)
+	return maskOrFixed(m.s, m.mask)
 }
 
 func (m MaskedText) LogValue() slog.Value {
-	return slog.StringValue(m.mask(m.s))
+	return slog.StringValue(maskOrFixed(m.s, m.mask))
 }
 
 func (m MaskedText) MarshalJSON() ([]byte, error) {
@@ -34,10 +45,11 @@ func (m MaskedText) MarshalJSON() ([]byte, error) {
 
 func (m *MaskedText) UnmarshalJSON(v []byte) error {
 	s, err := strconv.Unquote(string(v))
-	*m = MaskedText{
-		s:    s,
-		mask: FixedMaskFunc,
+
+	if m.mask == nil {
+		m.mask = FixedMaskFunc
 	}
+	m.s = s
 
 	return err
 }
@@ -50,10 +62,10 @@ func (m *MaskedText) UnmarshalYAML(value *yaml.Node) error {
 	var s string
 	err := value.Decode(&s)
 
-	*m = MaskedText{
-		s:    s,
-		mask: FixedMaskFunc,
+	if m.mask == nil {
+		m.mask = FixedMaskFunc
 	}
+	m.s = s
 
 	return err
 }
